@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IgniteAI Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Inclusive+Sans:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
+<style>
+  /* ---- InstUI "light" (Ignite) tokens ---- */
+  :root {
+    --font-heading: "Atkinson Hyperlegible Next", sans-serif;
+    --font-body: "Atkinson Hyperlegible Next", sans-serif;
+    --text: #273540;
+    --text-muted: #576773;
+    --text-success: #037D37;
+    --text-error: #CF1F24;
+    --surface: #ffffff;
+    --page: #F2F4F5;
+    --ai-top: #9E58BD;
+    --ai-bottom: #00828E;
+    --stroke-base: #8D959F;
+    --stroke-muted: #E8EAEC;
+    --stroke-strong: #5F6E7A;
+    --link: #2369A4;
+    --info: #2B7ABC;
+    --brand: #1D354F;
+    --chip-bg: #D5E2F6;
+    --alert-success: #03893D;
+    --spinner: #2871AF;
+    --spinner-track: rgba(35, 68, 101, 0.1);
+    --radius-card-sm: 12px;
+    --radius-card-md: 16px;
+    --radius-card-lg: 24px;
+    --shadow-resting: 0 2px 6px rgba(0, 29, 55, 0.08), 0 1px 2px rgba(0, 29, 55, 0.06);
+    --pad: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text);
+    padding: var(--pad);
+    -webkit-font-smoothing: antialiased;
+  }
+  svg { display: block; }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+
+  @keyframes agent-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes agent-ellipsis-dot2 { 0%, 33% { opacity: 0; } 34%, 100% { opacity: 1; } }
+  @keyframes agent-ellipsis-dot3 { 0%, 66% { opacity: 0; } 67%, 100% { opacity: 1; } }
+  @keyframes agent-wave {
+    0% { transform: rotate(0deg); } 20% { transform: rotate(20deg); }
+    40% { transform: rotate(-15deg); } 60% { transform: rotate(18deg); }
+    80% { transform: rotate(-8deg); } 100% { transform: rotate(0deg); }
+  }
+  @keyframes agent-spin { to { transform: rotate(360deg); } }
+  .fade0   { opacity: 0; animation: agent-fade-in 300ms ease-in-out 0ms both; }
+  .fade300 { opacity: 0; animation: agent-fade-in 300ms ease-in-out 300ms both; }
+  .fade600 { opacity: 0; animation: agent-fade-in 300ms ease-in-out 600ms both; }
+
+  /* ---- Shell ---- */
+  .panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border-radius: var(--radius-card-lg);
+    box-shadow: var(--shadow-resting);
+    overflow: hidden;
+  }
+  .hdr {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: linear-gradient(to right, var(--ai-top) 0%, var(--ai-bottom) 100%);
+  }
+  .hdr-title { display: flex; align-items: center; gap: 8px; color: #fff; }
+  .hdr-title h2 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem; font-weight: 700; line-height: 1.25; color: #fff;
+  }
+  .hdr-actions { display: flex; align-items: center; gap: 12px; }
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px; flex: none;
+    transition: background-color 120ms;
+  }
+  .hdr .icon-btn { color: #fff; }
+  .hdr .icon-btn:hover { background: rgba(255, 255, 255, 0.15); }
+  .icon-btn.grey { color: var(--text); }
+  .icon-btn.grey:hover { background: var(--page); }
+
+  /* ---- Scroll area ---- */
+  .scroller {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-anchor: none;
+    scrollbar-gutter: stable;
+  }
+
+  /* ---- Welcome ---- */
+  .welcome { padding: 52px 36px 36px; display: flex; flex-direction: column; gap: 38px; }
+  .hello-row { display: flex; align-items: center; gap: 8px; }
+  .hand-wrap { display: inline-block; flex-shrink: 0; transform-origin: bottom center; }
+  .hand-rot { display: inline-block; transform: rotate(-35deg); color: #171717; }
+  .hello-group { display: flex; flex-direction: column; gap: 12px; }
+  h2.hello {
+    font-family: var(--font-heading);
+    font-size: 1.75rem; font-weight: 600; line-height: 1.25;
+    background: linear-gradient(90deg, var(--ai-top) 20%, var(--ai-bottom) 81%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    width: fit-content;
+  }
+  .muted { color: var(--text-muted); }
+  .sect { display: flex; flex-direction: column; gap: 12px; }
+  .sect h3 { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; line-height: 1.25; }
+  .start-card {
+    display: flex; align-items: center; gap: 16px; width: 100%; text-align: left;
+    background: var(--surface); border: 1px solid var(--stroke-muted);
+    border-radius: var(--radius-card-lg); padding: 12px 24px;
+    transition: background-color 120ms;
+  }
+  .start-card:hover { background: #FAFBFC; }
+  .start-card .icon { color: #0870A3; flex: none; }
+  .start-card .lines { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .start-card .label { font-weight: 700; }
+  .start-card .desc { font-size: 0.875rem; color: var(--text-muted); }
+  .chip-btn {
+    display: block; width: 100%; text-align: left;
+    background: var(--chip-bg); color: var(--brand);
+    font-weight: 600; font-size: 1rem; line-height: 1.5;
+    border-radius: 16px; min-height: 2.5rem; padding: 9px 20px;
+    transition: background-color 120ms;
+  }
+  .chip-btn:hover { background: #C3D6F2; }
+  .chip-stack { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ---- Conversation ---- */
+  .chat { padding: 24px; display: flex; flex-direction: column; gap: 36px; }
+  .turn { display: flex; flex-direction: column; gap: 24px; }
+  .user-row { display: flex; justify-content: flex-end; padding-left: 36px; }
+  .user-card {
+    background: var(--surface); border-radius: var(--radius-card-md);
+    box-shadow: var(--shadow-resting); padding: 16px;
+  }
+  .resp { display: flex; flex-direction: column; gap: 12px; }
+  .resp-hdr { display: flex; align-items: center; gap: 8px; }
+  .resp-hdr.done { gap: 6px; color: var(--text-success); font-weight: 700; }
+  .task { font-weight: 700; color: var(--text-muted); }
+  .dots span { font-weight: 700; color: var(--text-muted); }
+  .dots .d2 { animation: agent-ellipsis-dot2 0.9s linear infinite; opacity: 0; }
+  .dots .d3 { animation: agent-ellipsis-dot3 0.9s linear infinite; opacity: 0; }
+  .spinner {
+    width: 16px; height: 16px; flex: none; border-radius: 50%;
+    border: 2.5px solid var(--spinner-track); border-top-color: var(--spinner);
+    animation: agent-spin 0.9s linear infinite;
+  }
+  .lnk { color: var(--link); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+  .lnk:hover { color: #174E7C; }
+
+  .actions { display: flex; gap: 6px; }
+  .actions .icon-btn { color: var(--text); }
+
+  /* ---- Artifact / tool approval card ---- */
+  .artifact {
+    background: var(--surface); border: 1px solid var(--stroke-muted);
+    border-radius: var(--radius-card-md); box-shadow: var(--shadow-resting);
+  }
+  .art-hdr { display: flex; align-items: center; justify-content: space-between; padding: 16px; }
+  .art-hdr h3 { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; line-height: 1.25; }
+  .connector-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--info); border-radius: 8px; background: var(--surface);
+    padding: 2px 8px; height: 28px;
+  }
+  .connector-chip .clabel { font-size: 0.875rem; }
+  .param { border-top: 1px solid var(--stroke-muted); padding: 16px; display: flex; flex-direction: column; gap: 2px; }
+  .param-row { display: flex; align-items: center; justify-content: space-between; }
+  .param-row .plabel { font-weight: 700; }
+  .kebab-wrap { position: relative; }
+  .kebab-menu {
+    position: absolute; right: 0; top: 34px; z-index: 10;
+    background: var(--surface); border: 1px solid var(--stroke-muted);
+    border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 29, 55, 0.15);
+    min-width: 140px; padding: 4px; display: none;
+  }
+  .kebab-menu.open { display: block; }
+  .kebab-menu button {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 8px 12px; border-radius: 6px; text-align: left; color: var(--text);
+  }
+  .kebab-menu button:hover { background: var(--page); }
+  .kebab-menu .mi { color: var(--text-muted); }
+  .art-body { border-top: 1px solid var(--stroke-muted); padding: 16px; }
+  .plan { display: flex; flex-direction: column; gap: 12px; }
+  .plan .ptitle { font-weight: 700; }
+  .plan ul { margin: 0 0 0 22px; display: flex; flex-direction: column; gap: 8px; }
+  .art-footer { border-top: 1px solid var(--stroke-muted); }
+  .approval { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .approval-btns { display: flex; gap: 12px; }
+  .ghost-btn {
+    flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 40px; border-radius: 12px; font-weight: 600; font-size: 1rem;
+    border: 1px solid currentColor; background: transparent;
+    transition: background-color 120ms;
+  }
+  .ghost-btn.ok { color: var(--text-success); }
+  .ghost-btn.ok:hover:not(:disabled) { background: rgba(3, 125, 55, 0.06); }
+  .ghost-btn.no { color: var(--text-error); }
+  .ghost-btn.no:hover:not(:disabled) { background: rgba(207, 31, 36, 0.06); }
+  .ghost-btn:disabled { opacity: 0.5; cursor: default; }
+  .approval-hint { text-align: center; font-size: 0.875rem; color: var(--text-muted); }
+  .alert-success {
+    display: flex; align-items: center; gap: 12px;
+    border: 2px solid var(--alert-success); border-radius: 12px;
+    background: var(--surface); padding: 12px 16px;
+  }
+  .alert-success .aicon { color: var(--alert-success); flex: none; }
+
+  /* ---- Resource card ---- */
+  .resource {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--surface); border: 1px solid var(--stroke-muted);
+    border-radius: var(--radius-card-md); box-shadow: var(--shadow-resting);
+    padding: 12px 16px;
+  }
+  .resource .lines { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; }
+  .resource .sub { font-size: 0.875rem; color: var(--text-muted); }
+  .resource .ext { color: var(--text-muted); flex: none; }
+
+  /* ---- Footer / prompt ---- */
+  .foot { flex: none; }
+  .prompt-box {
+    margin: 0 16px;
+    background: var(--surface);
+    border: 2px solid var(--stroke-strong);
+    border-radius: var(--radius-card-md);
+    padding: 16px;
+  }
+  .prompt-box:focus-within { outline: 2px solid var(--info); outline-offset: 2px; }
+  .prompt-label { font-size: 0.875rem; font-weight: 600; color: var(--text); display: block; margin-bottom: 12px; }
+  .prompt-box textarea {
+    width: 100%; border: none; outline: none; resize: none; overflow: hidden;
+    background: transparent; font-family: inherit; font-size: 1rem; line-height: 1.5;
+    color: inherit; padding: 0; display: block;
+  }
+  .prompt-box textarea::placeholder { color: var(--text-muted); }
+  .prompt-controls { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; }
+  .send-btn {
+    width: 32px; height: 32px; border-radius: 50%; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--stroke-base); color: #fff;
+    transition: background-color 150ms;
+  }
+  .send-btn.ready { background: var(--brand); }
+  .disclaimer { margin: 8px 16px 12px; font-size: 0.875rem; color: var(--text); text-align: center; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="hdr">
+    <div class="hdr-title">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M11.0621 2.53451C11.3843 1.66389 12.6157 1.66389 12.9379 2.53451L15.0815 8.32767C15.1828 8.60139 15.3986 8.8172 15.6723 8.91848L21.4655 11.0621C22.3361 11.3843 22.3361 12.6157 21.4655 12.9379L15.6723 15.0815C15.3986 15.1828 15.1828 15.3986 15.0815 15.6723L12.9379 21.4655C12.6157 22.3361 11.3843 22.3361 11.0621 21.4655L8.91849 15.6723C8.8172 15.3986 8.60139 15.1828 8.32767 15.0815L2.53451 12.9379C1.66389 12.6157 1.66389 11.3843 2.53451 11.0621L8.32767 8.91849C8.60139 8.8172 8.8172 8.60139 8.91848 8.32767L11.0621 2.53451Z" fill="currentColor"/><path d="M19.5311 1.26725C19.6922 0.831943 20.3078 0.831944 20.4689 1.26725L21.0804 2.91964L22.7327 3.53107C23.1681 3.69215 23.1681 4.30785 22.7327 4.46893L21.0804 5.08036L20.4689 6.73275C20.3078 7.16806 19.6922 7.16806 19.5311 6.73275L18.9196 5.08036L17.2673 4.46893C16.8319 4.30785 16.8319 3.69215 17.2673 3.53107L18.9196 2.91964L19.5311 1.26725Z" fill="currentColor"/></svg>
+      <h2>IgniteAI Agent</h2>
+    </div>
+    <div class="hdr-actions">
+      <button class="icon-btn" id="newChatBtn" aria-label="New chat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"/></svg></button>
+      <button class="icon-btn" aria-label="Chat history"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></button>
+      <button class="icon-btn" aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+  </div>
+
+  <div class="scroller" id="scroller">
+    <div class="welcome" id="welcome">
+      <div class="hello-group">
+        <div class="hello-row">
+          <span class="hand-wrap" id="handWrap"><span class="hand-rot"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></span></span>
+          <h2 class="hello">Hello!</h2>
+        </div>
+        <div class="muted">What are we doing today?</div>
+      </div>
+      <div class="sect">
+        <h3>Get started</h3>
+        <button class="start-card">
+          <span class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg></span>
+          <span class="lines">
+            <span class="label">Community library</span>
+            <span class="desc">Find proven prompts or share your own</span>
+          </span>
+        </button>
+      </div>
+      <div class="sect">
+        <h3>Try asking</h3>
+        <div class="chip-stack">
+          <button class="chip-btn try-chip">Help me analyze activity in this course</button>
+          <button class="chip-btn try-chip">Help me format a page</button>
+          <button class="chip-btn try-chip">What can you do? How can you assist me with my tasks in Canvas?</button>
+        </div>
+      </div>
+    </div>
+    <div id="chatWrap" hidden>
+      <div id="chatContent"><div class="chat" id="chat"></div></div>
+      <div id="spacer"></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="prompt-box" id="promptBox">
+      <label class="prompt-label" for="promptInput">Enter a prompt</label>
+      <textarea id="promptInput" rows="1" placeholder="Help me…"></textarea>
+      <div class="prompt-controls">
+        <button class="icon-btn grey" aria-label="AI suggestions"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15.6215 9.09155V15.0597M7.25786 15.0598L9.19423 9.4645C9.24716 9.31141 9.34651 9.17864 9.47844 9.08467C9.61037 8.99069 9.76832 8.94019 9.9303 8.94019C10.0923 8.94019 10.2502 8.99069 10.3822 9.08467C10.5141 9.17864 10.6134 9.31141 10.6664 9.4645L12.6027 15.0598M7.79008 13.5327H12.0706M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="send-btn" id="sendBtn" aria-label="Send message"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg></button>
+      </div>
+    </div>
+    <div class="disclaimer">AI can make mistakes. Consider checking important information.</div>
+  </div>
+</div>
+
+<script>
+/* ---- Config via query params: ?bg=f2f4f5 (page bg), ?pad=16 ---- */
+(function () {
+  const q = new URLSearchParams(location.search)
+  if (q.get('bg')) document.body.style.background = '#' + q.get('bg').replace('#', '')
+  if (q.get('pad')) document.documentElement.style.setProperty('--pad', q.get('pad') + 'px')
+})()
+
+/* ---- Icons ---- */
+const I = {
+  impact: '<svg width="16" height="16" viewBox="0 0 1920 1920" fill="none"><path d="M910.001 203.918C910.001 163.587 921.96 124.161 944.366 90.6273 966.773 57.0931 998.621 30.9565 1035.88 15.5225 1073.14.0883516 1114.15-3.9499 1153.7 3.91831 1193.26 11.7866 1229.59 31.2078 1258.11 59.7263 1286.63 88.2447 1306.05 124.579 1313.92 164.135 1321.78 203.692 1317.75 244.693 1302.32 281.954 1286.88 319.215 1260.74 351.062 1227.21 373.47 1193.68 395.876 1154.25 407.836 1113.92 407.836 1087.13 407.869 1060.6 402.617 1035.84 392.38 1011.09 382.144 988.596 367.124 969.654 348.182 950.712 329.241 935.692 306.748 925.457 281.993 915.22 257.237 909.967 230.706 910.001 203.918ZM167.424 913.308 458.311 622.422H1045.04L460.789 1206.68C421.886 1245.58 369.124 1267.44 314.107 1267.44 259.09 1267.44 206.327 1245.58 167.424 1206.68 128.522 1167.77 106.667 1115.01 106.667 1059.99 106.667 1004.97 128.522 952.211 167.424 913.308ZM1738.81 1027.77 1454.11 1313.21H867.136L1444.7 734.406C1483.6 695.405 1536.4 673.455 1591.49 673.386 1646.57 673.316 1699.43 695.132 1738.43 734.034 1777.43 772.936 1799.38 825.739 1799.45 880.826 1799.52 935.911 1777.71 988.769 1738.81 1027.77ZM587.075 1602.79C564.668 1636.33 552.709 1675.75 552.709 1716.08 552.709 1770.16 574.192 1822.02 612.435 1860.27 650.677 1898.51 702.543 1920 756.627 1920 796.957 1920 836.382 1908.04 869.917 1885.63 903.451 1863.23 929.588 1831.38 945.021 1794.12 960.456 1756.85 964.494 1715.85 956.625 1676.29 948.758 1636.74 929.336 1600.4 900.817 1571.89 872.299 1543.37 835.965 1523.94 796.409 1516.08 756.853 1508.21 715.851 1512.25 678.59 1527.69 641.329 1543.12 609.481 1569.25 587.075 1602.79Z" fill="currentColor"/></svg>',
+  circleCheck: (s) => '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+  check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  x: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  copy: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+  thumbsUp: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>',
+  thumbsDown: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>',
+  externalLink: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>',
+  kebab: '<svg width="18" height="18" viewBox="0 0 1920 1920" fill="currentColor"><path d="M960 1468.235c93.448 0 169.412 75.965 169.412 169.412 0 93.448-75.964 169.412-169.412 169.412-93.448 0-169.412-75.964-169.412-169.412 0-93.447 75.964-169.412 169.412-169.412Zm0-677.647c93.448 0 169.412 75.964 169.412 169.412 0 93.448-75.964 169.412-169.412 169.412-93.448 0-169.412-75.964-169.412-169.412 0-93.448 75.964-169.412 169.412-169.412Zm0-677.647c93.448 0 169.412 75.964 169.412 169.412 0 93.447-75.964 169.412-169.412 169.412-93.448 0-169.412-75.965-169.412-169.412 0-93.448 75.964-169.412 169.412-169.412Z" fill-rule="evenodd"/></svg>',
+  pencil: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>',
+  copySm: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+}
+
+/* ---- Script (verbatim from the POC) ---- */
+let LOADING_DELAY = 1200
+const lnk = (t) => '<a class="lnk" href="#" onclick="return false">' + t + '</a>'
+
+const supportGuidePlan = {
+  items: [
+    'Show to Maya Chen, Elijah Brooks, and ' + lnk('4 others') + ' on the course homepage',
+    'Segment updates automatically as new scores come in',
+    'Notify you once a student clicks through',
+  ],
+}
+const publishReminderPlan = {
+  items: [
+    'Show to ' + lnk('3 teachers') + ' on their course homepage',
+    'Clears automatically once each course is published',
+  ],
+}
+const surveyPlan = {
+  items: ['Show to ' + lnk('14 faculty') + ' on their course dashboard'],
+}
+
+const UC1_ENDING = {
+  agentText: "Done. The guide is live on Intro to Psychology's homepage — here's what students will see.",
+  attachment: { kind: 'resource', title: 'Extra support, when you need it', subtitle: 'Intro to Psychology · Course homepage guide', showExternalLink: true },
+  duration: '2s',
+}
+const UC2_ENDING = {
+  agentText: 'Done. The reminder is live on all 3 course homepages.',
+  attachment: { kind: 'resource', title: 'Publish reminder guide', subtitle: 'Preview coming soon', showExternalLink: true },
+  duration: '2s',
+}
+const UC3_ENDING = {
+  agentText: "Done. The survey is live on each faculty member's course dashboard.",
+  attachment: { kind: 'resource', title: 'PD feedback survey', subtitle: 'Inclusive Teaching Foundations · Course dashboard survey', showExternalLink: true },
+  duration: '2s',
+}
+
+const SCRIPT = [
+  {
+    userText: 'Which students scored 70% or below on their midterm in Intro to Psychology?',
+    agentText: '6 students scored 70% or below on the Midterm Exam in Intro to Psychology: Maya Chen, Elijah Brooks, and 4 others. Average score was 61%.',
+    suggestedPrompts: ['Offer them support resources', 'Message their advisors', 'Show the full list'],
+    taskLabel: 'Reviewing midterm scores',
+    duration: '5s',
+  },
+  {
+    userText: 'Offer them some support resources',
+    agentText: "I've drafted an Impact guide pointing these students to the Writing Center. Review the details below.",
+    attachment: {
+      kind: 'tool-approval', toolName: 'Send guide', connectorLabel: 'Impact',
+      params: [
+        { label: 'Guide location', value: 'Course homepage — Intro to Psychology' },
+        { label: 'Recipients', value: 'New segment: "Midterm ≤70%" (6 students)' },
+        { label: 'Subject', value: 'Extra support, when you need it' },
+        { label: 'Message', value: 'Your midterm score in Intro to Psychology qualifies you for extra support. The ' + lnk('Writing Center') + ' offers free one-on-one sessions — book a time that works for you.' },
+      ],
+      plan: supportGuidePlan,
+    },
+    duration: '6s',
+  },
+  {
+    userText: 'Can you make the tone a little warmer?',
+    agentText: "Updated — here's a warmer version of the message.",
+    attachment: {
+      kind: 'tool-approval', toolName: 'Send guide', connectorLabel: 'Impact',
+      params: [
+        { label: 'Guide location', value: 'Course homepage — Intro to Psychology' },
+        { label: 'Recipients', value: 'New segment: "Midterm ≤70%" (6 students)' },
+        { label: 'Subject', value: "You've got this — extra support if you want it" },
+        { label: 'Message', value: 'Midterms are tough, and your score in Intro to Psychology means you qualify for some extra support. The ' + lnk('Writing Center') + " offers free one-on-one sessions whenever you're ready — no pressure, just an option." },
+      ],
+      plan: supportGuidePlan,
+    },
+    duration: '4s',
+    postApproval: UC1_ENDING,
+  },
+  {
+    userText: "Which courses with students enrolled aren't published yet?",
+    agentText: "3 courses have enrolled students but haven't been published: Intro to Sociology, Statistics II, and World History 210. Term starts in 6 days.",
+    suggestedPrompts: ['Remind the teachers', 'Show enrollment counts'],
+    taskLabel: 'Checking publish status',
+    duration: '5s',
+  },
+  {
+    userText: 'Remind the teachers to publish by end of week',
+    agentText: "I've drafted a reminder guide for the 3 teachers, due to show on each course's homepage. Review below.",
+    attachment: {
+      kind: 'tool-approval', toolName: 'Send guide', connectorLabel: 'Impact',
+      params: [
+        { label: 'Guide location', value: 'Course homepage — on each unpublished course' },
+        { label: 'Recipients', value: 'New segment: "Unpublished, EOW reminder" (3 teachers)' },
+        { label: 'Subject', value: 'Please publish your course before Friday' },
+        { label: 'Message', value: "Students are already enrolled, but your course hasn't been published yet. Please publish it by end of week so they can get started on time." },
+      ],
+      plan: publishReminderPlan,
+    },
+    duration: '6s',
+    postApproval: UC2_ENDING,
+  },
+  {
+    userText: 'Which faculty have completed our Inclusive Teaching Foundations course?',
+    agentText: '14 faculty have completed Inclusive Teaching Foundations in the last two terms. I can send them a short guide asking for feedback.',
+    suggestedPrompts: ['Ask for feedback with a survey', 'Show the full list'],
+    taskLabel: 'Finding eligible faculty',
+    duration: '5s',
+  },
+  {
+    userText: 'Ask them for feedback with a star rating survey',
+    agentText: "I've put together a 2-question survey guide for the 14 faculty who completed the course. Review it below.",
+    attachment: {
+      kind: 'tool-approval', toolName: 'Send guide', connectorLabel: 'Impact',
+      params: [
+        { label: 'Guide location', value: 'Course dashboard' },
+        { label: 'Recipients', value: 'New segment: "Completed: Inclusive Teaching Foundations" (14 faculty)' },
+        { label: 'Question 1 · Star rating', value: 'How would you rate Inclusive Teaching Foundations?' },
+        { label: 'Question 2 · Text', value: 'Additional comments (optional)' },
+      ],
+      plan: surveyPlan,
+    },
+    duration: '7s',
+    postApproval: UC3_ENDING,
+  },
+]
+
+/* ---- DOM refs ---- */
+const scroller = document.getElementById('scroller')
+const welcome = document.getElementById('welcome')
+const chatWrap = document.getElementById('chatWrap')
+const chatContent = document.getElementById('chatContent')
+const chat = document.getElementById('chat')
+const spacer = document.getElementById('spacer')
+const promptInput = document.getElementById('promptInput')
+const sendBtn = document.getElementById('sendBtn')
+
+/* ---- Renderers ---- */
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+
+function renderLoadingHeader(taskLabel) {
+  return '<div class="resp-hdr"><span class="spinner"></span>'
+    + '<span class="task">' + esc(taskLabel || 'Thinking')
+    + '<span class="dots"><span>.</span><span class="d2">.</span><span class="d3">.</span></span></span></div>'
+}
+function renderDoneHeader(duration) {
+  return '<div class="resp-hdr done"><span style="flex:none;display:inline-flex">' + I.circleCheck(16) + '</span>'
+    + '<span>Agent thought for ' + duration + '</span></div>'
+}
+function renderActions() {
+  return '<div class="actions fade0">'
+    + '<button class="icon-btn grey" aria-label="Copy response">' + I.copy + '</button>'
+    + '<button class="icon-btn grey" aria-label="Like response">' + I.thumbsUp + '</button>'
+    + '<button class="icon-btn grey" aria-label="Dislike response">' + I.thumbsDown + '</button></div>'
+}
+function renderResource(a) {
+  return '<div class="resource fade300"><div class="lines">'
+    + '<a class="lnk" href="#" onclick="return false">' + esc(a.title) + '</a>'
+    + (a.subtitle ? '<span class="sub">' + esc(a.subtitle) + '</span>' : '')
+    + '</div>' + (a.showExternalLink ? '<span class="ext">' + I.externalLink + '</span>' : '') + '</div>'
+}
+function renderToolApproval(a, id) {
+  let h = '<div class="artifact fade300" data-approval="' + id + '">'
+  h += '<div class="art-hdr"><h3>' + esc(a.toolName) + '</h3>'
+    + '<span class="connector-chip">' + I.impact + '<span class="clabel">' + esc(a.connectorLabel) + '</span></span></div>'
+  for (const p of a.params) {
+    h += '<div class="param"><div class="param-row"><span class="plabel">' + esc(p.label) + '</span>'
+      + '<span class="kebab-wrap"><button class="icon-btn grey kebab" aria-label="' + esc(p.label) + ' options">' + I.kebab + '</button>'
+      + '<span class="kebab-menu"><button><span class="mi">' + I.copySm + '</span>Copy</button>'
+      + '<button><span class="mi">' + I.pencil + '</span>Edit</button></span></span></div>'
+      + '<div>' + p.value + '</div></div>'
+  }
+  if (a.plan) {
+    h += '<div class="art-body"><div class="plan"><span class="ptitle">Plan</span><ul>'
+    for (const it of a.plan.items) h += '<li>' + it + '</li>'
+    h += '</ul></div></div>'
+  }
+  h += '<div class="art-footer"><div class="approval">'
+    + '<div class="approval-btns">'
+    + '<button class="ghost-btn ok" data-approve="' + id + '">' + I.check + 'Approve</button>'
+    + '<button class="ghost-btn no" data-reject="' + id + '">' + I.x + 'Reject</button></div>'
+    + '<div class="approval-hint">Or type below to request changes.</div>'
+    + '</div></div></div>'
+  return h
+}
+function renderFooterChips(prompts) {
+  let h = '<div class="foot-chips fade600"><div class="chip-stack">'
+  for (const p of prompts) h += '<button class="chip-btn sugg-chip">' + esc(p) + '</button>'
+  return h + '</div></div>'
+}
+
+/* ---- Scroll system (mirrors the POC ChatFlow) ---- */
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  || new URLSearchParams(location.search).has('auto')
+let ro = null
+let observedTurn = null
+function recalc(scrollToTurn) {
+  const turns = chat.querySelectorAll('.turn')
+  const last = turns[turns.length - 1]
+  if (!last) return
+  const containerHeight = scroller.clientHeight
+  const naturalScrollHeight = chatContent.offsetHeight
+  const containerRect = scroller.getBoundingClientRect()
+  const turnRect = last.getBoundingClientRect()
+  const turnTopInContent = turnRect.top - containerRect.top + scroller.scrollTop
+  const contentBelow = naturalScrollHeight - turnTopInContent - turnRect.height
+  spacer.style.height = Math.max(0, containerHeight - turnRect.height - contentBelow) + 'px'
+  if (scrollToTurn) {
+    requestAnimationFrame(() => {
+      const r = last.getBoundingClientRect()
+      const target = r.top - scroller.getBoundingClientRect().top + scroller.scrollTop - 24
+      scroller.scrollTo({ top: target, behavior: prefersReducedMotion ? 'instant' : 'smooth' })
+    })
+  }
+  if (last !== observedTurn) {
+    if (ro) ro.disconnect()
+    observedTurn = last
+    ro = new ResizeObserver(() => recalc(false))
+    ro.observe(last)
+  }
+}
+
+/* ---- Simulator ---- */
+let scriptIndex = 0
+let msgSeq = 0
+const postApprovalById = {}
+
+function currentLastFooter() {
+  const f = chat.querySelector('.foot-chips')
+  if (f) f.remove()
+}
+
+function pushTurn({ userText, taskLabel }) {
+  currentLastFooter()
+  const id = 'msg-' + (++msgSeq)
+  const turn = document.createElement('div')
+  turn.className = 'turn'
+  turn.dataset.id = id
+  let h = ''
+  if (userText) h += '<div class="user-row"><div class="user-card">' + esc(userText) + '</div></div>'
+  h += '<div class="resp fade0" data-resp>' + renderLoadingHeader(taskLabel) + '</div>'
+  turn.innerHTML = h
+  chat.appendChild(turn)
+  recalc(true)
+  return { id, turn }
+}
+
+function completeTurn(turn, entry, id) {
+  const resp = turn.querySelector('[data-resp]')
+  let h = renderDoneHeader(entry.duration || Math.round(LOADING_DELAY / 1000) + 's')
+  if (entry.agentText) h += '<div>' + esc(entry.agentText) + '</div>'
+  resp.innerHTML = h
+  let after = ''
+  const a = entry.attachment
+  if (a && a.kind === 'resource') after += renderResource(a)
+  if (a && a.kind === 'tool-approval') after += renderToolApproval(a, id)
+  after += renderActions()
+  const pendingApproval = a && a.kind === 'tool-approval'
+  if (!pendingApproval && entry.suggestedPrompts) after += renderFooterChips(entry.suggestedPrompts)
+  turn.insertAdjacentHTML('beforeend', after)
+  recalc(true)
+}
+
+function submit() {
+  if (welcome && !welcome.hidden) { welcome.hidden = true; chatWrap.hidden = false }
+  const entry = SCRIPT[scriptIndex % SCRIPT.length]
+  scriptIndex++
+  const { id, turn } = pushTurn({ userText: entry.userText, taskLabel: entry.taskLabel })
+  if (entry.postApproval) postApprovalById[id] = entry.postApproval
+  setTimeout(() => completeTurn(turn, entry, id), LOADING_DELAY)
+}
+
+function approve(id) {
+  const card = chat.querySelector('[data-approval="' + id + '"]')
+  if (!card) return
+  card.querySelectorAll('.ghost-btn').forEach((b) => { b.disabled = true })
+  const hint = card.querySelector('.approval-hint')
+  if (hint) hint.remove()
+  card.querySelector('.approval').insertAdjacentHTML('beforeend',
+    '<div class="alert-success"><span class="aicon">' + I.circleCheck(20) + '</span><span>This action was approved.</span></div>')
+  const next = postApprovalById[id]
+  if (!next) { recalc(false); return }
+  const { turn } = pushTurn({ taskLabel: next.taskLabel })
+  setTimeout(() => completeTurn(turn, next, null), LOADING_DELAY)
+}
+
+function resetChat() {
+  scriptIndex = 0
+  msgSeq = 0
+  chat.innerHTML = ''
+  spacer.style.height = '0px'
+  if (ro) { ro.disconnect(); ro = null; observedTurn = null }
+  chatWrap.hidden = true
+  welcome.hidden = false
+  scroller.scrollTop = 0
+  promptInput.value = ''
+  autogrow()
+  waveHand()
+}
+
+/* ---- Input wiring ---- */
+function autogrow() {
+  promptInput.style.height = 'auto'
+  promptInput.style.height = promptInput.scrollHeight + 'px'
+  sendBtn.classList.toggle('ready', promptInput.value.trim().length > 0)
+}
+promptInput.addEventListener('input', autogrow)
+promptInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    doSend()
+  }
+})
+sendBtn.addEventListener('click', doSend)
+function doSend() {
+  submit()
+  promptInput.value = ''
+  autogrow()
+}
+
+document.getElementById('newChatBtn').addEventListener('click', resetChat)
+
+/* Approve / reject / kebab (delegated) */
+document.addEventListener('click', (e) => {
+  const ap = e.target.closest('[data-approve]')
+  if (ap && !ap.disabled) { approve(ap.dataset.approve); return }
+  const kb = e.target.closest('.kebab')
+  document.querySelectorAll('.kebab-menu.open').forEach((m) => {
+    if (!kb || m !== kb.nextElementSibling) m.classList.remove('open')
+  })
+  if (kb) kb.nextElementSibling.classList.toggle('open')
+  if (e.target.closest('.kebab-menu')) e.target.closest('.kebab-menu').classList.remove('open')
+})
+
+/* Suggested-prompt chips focus the input (inert in the POC) */
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.sugg-chip') || e.target.closest('.try-chip')) promptInput.focus()
+})
+
+/* ---- Welcome hand wave ---- */
+const handWrap = document.getElementById('handWrap')
+function waveHand() {
+  handWrap.style.animation = 'none'
+  void handWrap.offsetWidth
+  handWrap.style.animation = 'agent-wave 0.7s ease-in-out'
+  handWrap.addEventListener('animationend', () => { handWrap.style.animation = '' }, { once: true })
+}
+handWrap.addEventListener('mouseenter', waveHand)
+setTimeout(waveHand, 400)
+
+/* ---- Screenshot-test driver: ?auto=s,s,a&delay=50 (s=submit, a=approve last card) ---- */
+;(function () {
+  const q = new URLSearchParams(location.search)
+  if (q.get('delay')) LOADING_DELAY = parseInt(q.get('delay'), 10)
+  const auto = q.get('auto')
+  if (!auto) return
+  const steps = auto.split(',')
+  let t = 100
+  for (const step of steps) {
+    if (step === 's') { setTimeout(submit, t); t += LOADING_DELAY + 300 }
+    else if (step === 'a') {
+      setTimeout(() => {
+        const btns = chat.querySelectorAll('[data-approve]:not(:disabled)')
+        const last = btns[btns.length - 1]
+        if (last) approve(last.dataset.approve)
+      }, t)
+      t += LOADING_DELAY + 300
+    }
+  }
+})()
+</script>
+</body>
+</html>
