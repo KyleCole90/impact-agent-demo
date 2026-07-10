@@ -611,6 +611,9 @@ function completeTurn(turn, entry, id) {
 
 function submit() {
   if (scriptIndex >= SCRIPT.length) return
+  cancelTyping()
+  promptInput.value = ''
+  autogrow()
   if (welcome && !welcome.hidden) { welcome.hidden = true; chatWrap.hidden = false }
   const entry = SCRIPT[scriptIndex]
   scriptIndex++
@@ -642,6 +645,7 @@ function resetChat() {
   chatWrap.hidden = true
   welcome.hidden = false
   scroller.scrollTop = 0
+  cancelTyping()
   promptInput.value = ''
   autogrow()
   waveHand()
@@ -654,6 +658,25 @@ function autogrow() {
   sendBtn.classList.toggle('ready', promptInput.value.trim().length > 0)
 }
 promptInput.addEventListener('input', autogrow)
+
+/* Clicking the prompt box auto-types the next scripted prompt; Enter then advances */
+let typeTimer = null
+function cancelTyping() {
+  if (typeTimer) { clearInterval(typeTimer); typeTimer = null }
+}
+promptInput.addEventListener('click', () => {
+  if (typeTimer) return
+  if (promptInput.value.trim()) return
+  if (scriptIndex >= SCRIPT.length) return
+  const target = SCRIPT[scriptIndex].userText
+  let i = 0
+  typeTimer = setInterval(() => {
+    i++
+    promptInput.value = target.slice(0, i)
+    autogrow()
+    if (i >= target.length) cancelTyping()
+  }, 18)
+})
 promptInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
