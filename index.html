@@ -53,6 +53,11 @@
   @keyframes agent-fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes agent-ellipsis-dot2 { 0%, 33% { opacity: 0; } 34%, 100% { opacity: 1; } }
   @keyframes agent-ellipsis-dot3 { 0%, 66% { opacity: 0; } 67%, 100% { opacity: 1; } }
+  @keyframes agent-wave {
+    0% { transform: rotate(0deg); } 20% { transform: rotate(20deg); }
+    40% { transform: rotate(-15deg); } 60% { transform: rotate(18deg); }
+    80% { transform: rotate(-8deg); } 100% { transform: rotate(0deg); }
+  }
   @keyframes agent-spin { to { transform: rotate(360deg); } }
   .fade0   { opacity: 0; animation: agent-fade-in 300ms ease-in-out 0ms both; }
   .fade300 { opacity: 0; animation: agent-fade-in 300ms ease-in-out 300ms both; }
@@ -101,11 +106,34 @@
     scrollbar-gutter: stable;
   }
 
-  /* ---- Empty state ---- */
-  .empty {
-    height: 100%; display: flex; align-items: center; justify-content: center;
-    font-size: 0.875rem; color: var(--text-muted);
+  /* ---- Welcome ---- */
+  .welcome { padding: 52px 36px 36px; display: flex; flex-direction: column; gap: 38px; }
+  .hello-row { display: flex; align-items: center; gap: 8px; }
+  .hand-wrap { display: inline-block; flex-shrink: 0; transform-origin: bottom center; }
+  .hand-rot { display: inline-block; transform: rotate(-35deg); color: #171717; }
+  .hello-group { display: flex; flex-direction: column; gap: 12px; }
+  h2.hello {
+    font-family: var(--font-heading);
+    font-size: 1.75rem; font-weight: 600; line-height: 1.25;
+    background: linear-gradient(90deg, var(--ai-top) 20%, var(--ai-bottom) 81%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    width: fit-content;
   }
+  .muted { color: var(--text-muted); }
+  .sect { display: flex; flex-direction: column; gap: 12px; }
+  .sect h3 { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; line-height: 1.25; }
+  .start-card {
+    display: flex; align-items: center; gap: 16px; width: 100%; text-align: left;
+    background: var(--surface); border: 1px solid var(--stroke-muted);
+    border-radius: var(--radius-card-lg); padding: 12px 24px;
+    transition: background-color 120ms;
+  }
+  .start-card:hover { background: #FAFBFC; }
+  .start-card .icon { color: #0870A3; flex: none; }
+  .start-card .lines { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .start-card .label { font-weight: 700; }
+  .start-card .desc { font-size: 0.875rem; color: var(--text-muted); }
   .chip-btn {
     display: block; width: 100%; text-align: left;
     background: var(--chip-bg); color: var(--brand);
@@ -252,7 +280,33 @@
   </div>
 
   <div class="scroller" id="scroller">
-    <div class="empty" id="welcome">Send a message to begin</div>
+    <div class="welcome" id="welcome">
+      <div class="hello-group">
+        <div class="hello-row">
+          <span class="hand-wrap" id="handWrap"><span class="hand-rot"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></span></span>
+          <h2 class="hello">Hello!</h2>
+        </div>
+        <div class="muted">What are we doing today?</div>
+      </div>
+      <div class="sect">
+        <h3>Get started</h3>
+        <button class="start-card">
+          <span class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg></span>
+          <span class="lines">
+            <span class="label">Community library</span>
+            <span class="desc">Find proven prompts or share your own</span>
+          </span>
+        </button>
+      </div>
+      <div class="sect">
+        <h3>Try asking</h3>
+        <div class="chip-stack">
+          <button class="chip-btn try-chip">Help me analyze activity in this course</button>
+          <button class="chip-btn try-chip">Help me format a page</button>
+          <button class="chip-btn try-chip">What can you do? How can you assist me with my tasks in Canvas?</button>
+        </div>
+      </div>
+    </div>
     <div id="chatWrap" hidden>
       <div id="chatContent"><div class="chat" id="chat"></div></div>
       <div id="spacer"></div>
@@ -556,8 +610,9 @@ function completeTurn(turn, entry, id) {
 }
 
 function submit() {
+  if (scriptIndex >= SCRIPT.length) return
   if (welcome && !welcome.hidden) { welcome.hidden = true; chatWrap.hidden = false }
-  const entry = SCRIPT[scriptIndex % SCRIPT.length]
+  const entry = SCRIPT[scriptIndex]
   scriptIndex++
   const { id, turn } = pushTurn({ userText: entry.userText, taskLabel: entry.taskLabel })
   if (entry.postApproval) postApprovalById[id] = entry.postApproval
@@ -589,6 +644,7 @@ function resetChat() {
   scroller.scrollTop = 0
   promptInput.value = ''
   autogrow()
+  waveHand()
 }
 
 /* ---- Input wiring ---- */
@@ -625,10 +681,22 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('.kebab-menu')) e.target.closest('.kebab-menu').classList.remove('open')
 })
 
-/* Suggested-prompt chips focus the input (inert in the POC) */
+/* Suggested-prompt chips advance the conversation; "Try asking" chips focus the input */
 document.addEventListener('click', (e) => {
-  if (e.target.closest('.sugg-chip')) promptInput.focus()
+  if (e.target.closest('.sugg-chip')) { submit(); return }
+  if (e.target.closest('.try-chip')) promptInput.focus()
 })
+
+/* ---- Welcome hand wave ---- */
+const handWrap = document.getElementById('handWrap')
+function waveHand() {
+  handWrap.style.animation = 'none'
+  void handWrap.offsetWidth
+  handWrap.style.animation = 'agent-wave 0.7s ease-in-out'
+  handWrap.addEventListener('animationend', () => { handWrap.style.animation = '' }, { once: true })
+}
+handWrap.addEventListener('mouseenter', waveHand)
+setTimeout(waveHand, 400)
 
 /* ---- Screenshot-test driver: ?auto=s,s,a&delay=50 (s=submit, a=approve last card) ---- */
 ;(function () {
