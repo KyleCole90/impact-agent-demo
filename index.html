@@ -53,11 +53,6 @@
   @keyframes agent-fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes agent-ellipsis-dot2 { 0%, 33% { opacity: 0; } 34%, 100% { opacity: 1; } }
   @keyframes agent-ellipsis-dot3 { 0%, 66% { opacity: 0; } 67%, 100% { opacity: 1; } }
-  @keyframes agent-wave {
-    0% { transform: rotate(0deg); } 20% { transform: rotate(20deg); }
-    40% { transform: rotate(-15deg); } 60% { transform: rotate(18deg); }
-    80% { transform: rotate(-8deg); } 100% { transform: rotate(0deg); }
-  }
   @keyframes agent-spin { to { transform: rotate(360deg); } }
   .fade0   { opacity: 0; animation: agent-fade-in 300ms ease-in-out 0ms both; }
   .fade300 { opacity: 0; animation: agent-fade-in 300ms ease-in-out 300ms both; }
@@ -106,34 +101,11 @@
     scrollbar-gutter: stable;
   }
 
-  /* ---- Welcome ---- */
-  .welcome { padding: 52px 36px 36px; display: flex; flex-direction: column; gap: 38px; }
-  .hello-row { display: flex; align-items: center; gap: 8px; }
-  .hand-wrap { display: inline-block; flex-shrink: 0; transform-origin: bottom center; }
-  .hand-rot { display: inline-block; transform: rotate(-35deg); color: #171717; }
-  .hello-group { display: flex; flex-direction: column; gap: 12px; }
-  h2.hello {
-    font-family: var(--font-heading);
-    font-size: 1.75rem; font-weight: 600; line-height: 1.25;
-    background: linear-gradient(90deg, var(--ai-top) 20%, var(--ai-bottom) 81%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
-    width: fit-content;
+  /* ---- Empty state ---- */
+  .empty {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.875rem; color: var(--text-muted);
   }
-  .muted { color: var(--text-muted); }
-  .sect { display: flex; flex-direction: column; gap: 12px; }
-  .sect h3 { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; line-height: 1.25; }
-  .start-card {
-    display: flex; align-items: center; gap: 16px; width: 100%; text-align: left;
-    background: var(--surface); border: 1px solid var(--stroke-muted);
-    border-radius: var(--radius-card-lg); padding: 12px 24px;
-    transition: background-color 120ms;
-  }
-  .start-card:hover { background: #FAFBFC; }
-  .start-card .icon { color: #0870A3; flex: none; }
-  .start-card .lines { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .start-card .label { font-weight: 700; }
-  .start-card .desc { font-size: 0.875rem; color: var(--text-muted); }
   .chip-btn {
     display: block; width: 100%; text-align: left;
     background: var(--chip-bg); color: var(--brand);
@@ -280,33 +252,7 @@
   </div>
 
   <div class="scroller" id="scroller">
-    <div class="welcome" id="welcome">
-      <div class="hello-group">
-        <div class="hello-row">
-          <span class="hand-wrap" id="handWrap"><span class="hand-rot"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></span></span>
-          <h2 class="hello">Hello!</h2>
-        </div>
-        <div class="muted">What are we doing today?</div>
-      </div>
-      <div class="sect">
-        <h3>Get started</h3>
-        <button class="start-card">
-          <span class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg></span>
-          <span class="lines">
-            <span class="label">Community library</span>
-            <span class="desc">Find proven prompts or share your own</span>
-          </span>
-        </button>
-      </div>
-      <div class="sect">
-        <h3>Try asking</h3>
-        <div class="chip-stack">
-          <button class="chip-btn try-chip">Help me analyze activity in this course</button>
-          <button class="chip-btn try-chip">Help me format a page</button>
-          <button class="chip-btn try-chip">What can you do? How can you assist me with my tasks in Canvas?</button>
-        </div>
-      </div>
-    </div>
+    <div class="empty" id="welcome">Send a message to begin</div>
     <div id="chatWrap" hidden>
       <div id="chatContent"><div class="chat" id="chat"></div></div>
       <div id="spacer"></div>
@@ -336,7 +282,7 @@
 
 /* ---- Icons ---- */
 const I = {
-  impact: '<svg width="16" height="16" viewBox="0 0 1920 1920" fill="none"><path d="M910.001 203.918C910.001 163.587 921.96 124.161 944.366 90.6273 966.773 57.0931 998.621 30.9565 1035.88 15.5225 1073.14.0883516 1114.15-3.9499 1153.7 3.91831 1193.26 11.7866 1229.59 31.2078 1258.11 59.7263 1286.63 88.2447 1306.05 124.579 1313.92 164.135 1321.78 203.692 1317.75 244.693 1302.32 281.954 1286.88 319.215 1260.74 351.062 1227.21 373.47 1193.68 395.876 1154.25 407.836 1113.92 407.836 1087.13 407.869 1060.6 402.617 1035.84 392.38 1011.09 382.144 988.596 367.124 969.654 348.182 950.712 329.241 935.692 306.748 925.457 281.993 915.22 257.237 909.967 230.706 910.001 203.918ZM167.424 913.308 458.311 622.422H1045.04L460.789 1206.68C421.886 1245.58 369.124 1267.44 314.107 1267.44 259.09 1267.44 206.327 1245.58 167.424 1206.68 128.522 1167.77 106.667 1115.01 106.667 1059.99 106.667 1004.97 128.522 952.211 167.424 913.308ZM1738.81 1027.77 1454.11 1313.21H867.136L1444.7 734.406C1483.6 695.405 1536.4 673.455 1591.49 673.386 1646.57 673.316 1699.43 695.132 1738.43 734.034 1777.43 772.936 1799.38 825.739 1799.45 880.826 1799.52 935.911 1777.71 988.769 1738.81 1027.77ZM587.075 1602.79C564.668 1636.33 552.709 1675.75 552.709 1716.08 552.709 1770.16 574.192 1822.02 612.435 1860.27 650.677 1898.51 702.543 1920 756.627 1920 796.957 1920 836.382 1908.04 869.917 1885.63 903.451 1863.23 929.588 1831.38 945.021 1794.12 960.456 1756.85 964.494 1715.85 956.625 1676.29 948.758 1636.74 929.336 1600.4 900.817 1571.89 872.299 1543.37 835.965 1523.94 796.409 1516.08 756.853 1508.21 715.851 1512.25 678.59 1527.69 641.329 1543.12 609.481 1569.25 587.075 1602.79Z" fill="currentColor"/></svg>',
+  impact: '<svg width="18" height="18" viewBox="0 0 60.12 60.12" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Impact"><rect width="60.12" height="60.12" fill="#0b1722"/><rect x="21.73" y="13.96" width="6.98" height="32.09" fill="#fff"/><path d="M34,41.99h0c0-2.25,1.91-4.17,4.17-4.17s4.17,1.91,4.17,4.17-1.91,4.17-4.17,4.17-4.17-1.91-4.17-4.17" fill="#d42e21"/></svg>',
   circleCheck: (s) => '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
   check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
   x: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
@@ -355,7 +301,7 @@ const lnk = (t) => '<a class="lnk" href="#" onclick="return false">' + t + '</a>
 
 const supportGuidePlan = {
   items: [
-    'Show to Maya Chen, Elijah Brooks, and ' + lnk('4 others') + ' on the course homepage',
+    'Show to Maya Chen, Elijah Brooks, and ' + lnk('4 others') + ' on their course homepage',
     'Segment updates automatically as new scores come in',
     'Notify you once a student clicks through',
   ],
@@ -371,8 +317,8 @@ const surveyPlan = {
 }
 
 const UC1_ENDING = {
-  agentText: "Done. The guide is live on Intro to Psychology's homepage — here's what students will see.",
-  attachment: { kind: 'resource', title: 'Extra support, when you need it', subtitle: 'Intro to Psychology · Course homepage guide', showExternalLink: true },
+  agentText: "Done. The guide is live on every Intro to Creative Writing course homepage — here's what students will see.",
+  attachment: { kind: 'resource', title: 'Extra support, when you need it', subtitle: 'Intro to Creative Writing · Course homepage guide', showExternalLink: true },
   duration: '2s',
 }
 const UC2_ENDING = {
@@ -388,22 +334,22 @@ const UC3_ENDING = {
 
 const SCRIPT = [
   {
-    userText: 'Which students scored 70% or below on their midterm in Intro to Psychology?',
-    agentText: '6 students scored 70% or below on the Midterm Exam in Intro to Psychology: Maya Chen, Elijah Brooks, and 4 others. Average score was 61%.',
+    userText: 'Which students scored 70% or below on their midterm across all Intro to Creative Writing courses?',
+    agentText: '6 students scored 70% or below on the Midterm Exam across all Intro to Creative Writing courses: Maya Chen, Elijah Brooks, and 4 others. Average score was 61%.',
     suggestedPrompts: ['Offer them support resources', 'Message their advisors', 'Show the full list'],
     taskLabel: 'Reviewing midterm scores',
     duration: '5s',
   },
   {
     userText: 'Offer them some support resources',
-    agentText: "I've drafted an Impact guide pointing these students to the Writing Center. Review the details below.",
+    agentText: "I've drafted an Impact guide pointing these students to the Writing Lab. Review the details below.",
     attachment: {
       kind: 'tool-approval', toolName: 'Send guide', connectorLabel: 'Impact',
       params: [
-        { label: 'Guide location', value: 'Course homepage — Intro to Psychology' },
-        { label: 'Recipients', value: 'New segment: "Midterm ≤70%" (6 students)' },
-        { label: 'Subject', value: 'Extra support, when you need it' },
-        { label: 'Message', value: 'Your midterm score in Intro to Psychology qualifies you for extra support. The ' + lnk('Writing Center') + ' offers free one-on-one sessions — book a time that works for you.' },
+        { label: 'Guide location', value: 'Course homepage — all Intro to Creative Writing courses' },
+        { label: 'Recipients', value: 'New Impact segment: "Midterm ≤70%" (6 students)' },
+        { label: 'Title', value: 'Extra support, when you need it' },
+        { label: 'Message', value: 'Your midterm score in Intro to Creative Writing qualifies you for extra support. The ' + lnk('Writing Lab') + ' offers free one-on-one sessions — book a time that works for you.' },
       ],
       plan: supportGuidePlan,
     },
@@ -415,10 +361,10 @@ const SCRIPT = [
     attachment: {
       kind: 'tool-approval', toolName: 'Send guide', connectorLabel: 'Impact',
       params: [
-        { label: 'Guide location', value: 'Course homepage — Intro to Psychology' },
-        { label: 'Recipients', value: 'New segment: "Midterm ≤70%" (6 students)' },
-        { label: 'Subject', value: "You've got this — extra support if you want it" },
-        { label: 'Message', value: 'Midterms are tough, and your score in Intro to Psychology means you qualify for some extra support. The ' + lnk('Writing Center') + " offers free one-on-one sessions whenever you're ready — no pressure, just an option." },
+        { label: 'Guide location', value: 'Course homepage — all Intro to Creative Writing courses' },
+        { label: 'Recipients', value: 'New Impact segment: "Midterm ≤70%" (6 students)' },
+        { label: 'Title', value: "You've got this — extra support if you want it" },
+        { label: 'Message', value: 'Midterms are tough, and your score in Intro to Creative Writing means you qualify for some extra support. The ' + lnk('Writing Lab') + " offers free one-on-one sessions whenever you're ready — no pressure, just an option." },
       ],
       plan: supportGuidePlan,
     },
@@ -439,8 +385,8 @@ const SCRIPT = [
       kind: 'tool-approval', toolName: 'Send guide', connectorLabel: 'Impact',
       params: [
         { label: 'Guide location', value: 'Course homepage — on each unpublished course' },
-        { label: 'Recipients', value: 'New segment: "Unpublished, EOW reminder" (3 teachers)' },
-        { label: 'Subject', value: 'Please publish your course before Friday' },
+        { label: 'Recipients', value: 'New Impact segment: "Unpublished, EOW reminder" (3 teachers)' },
+        { label: 'Title', value: 'Please publish your course before Friday' },
         { label: 'Message', value: "Students are already enrolled, but your course hasn't been published yet. Please publish it by end of week so they can get started on time." },
       ],
       plan: publishReminderPlan,
@@ -462,7 +408,7 @@ const SCRIPT = [
       kind: 'tool-approval', toolName: 'Send guide', connectorLabel: 'Impact',
       params: [
         { label: 'Guide location', value: 'Course dashboard' },
-        { label: 'Recipients', value: 'New segment: "Completed: Inclusive Teaching Foundations" (14 faculty)' },
+        { label: 'Recipients', value: 'New Impact segment: "Completed: Inclusive Teaching Foundations" (14 faculty)' },
         { label: 'Question 1 · Star rating', value: 'How would you rate Inclusive Teaching Foundations?' },
         { label: 'Question 2 · Text', value: 'Additional comments (optional)' },
       ],
@@ -643,7 +589,6 @@ function resetChat() {
   scroller.scrollTop = 0
   promptInput.value = ''
   autogrow()
-  waveHand()
 }
 
 /* ---- Input wiring ---- */
@@ -682,19 +627,8 @@ document.addEventListener('click', (e) => {
 
 /* Suggested-prompt chips focus the input (inert in the POC) */
 document.addEventListener('click', (e) => {
-  if (e.target.closest('.sugg-chip') || e.target.closest('.try-chip')) promptInput.focus()
+  if (e.target.closest('.sugg-chip')) promptInput.focus()
 })
-
-/* ---- Welcome hand wave ---- */
-const handWrap = document.getElementById('handWrap')
-function waveHand() {
-  handWrap.style.animation = 'none'
-  void handWrap.offsetWidth
-  handWrap.style.animation = 'agent-wave 0.7s ease-in-out'
-  handWrap.addEventListener('animationend', () => { handWrap.style.animation = '' }, { once: true })
-}
-handWrap.addEventListener('mouseenter', waveHand)
-setTimeout(waveHand, 400)
 
 /* ---- Screenshot-test driver: ?auto=s,s,a&delay=50 (s=submit, a=approve last card) ---- */
 ;(function () {
